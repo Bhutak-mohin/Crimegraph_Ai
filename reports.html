@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrimeGraph AI — Forensic Reports</title>
+<meta name="description" content="Forensic reports, network analysis summaries, and evidence exports for all active investigations.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<link rel="stylesheet" href="assets/css/global.css">
+<link rel="stylesheet" href="assets/css/reports.css">
+</head>
+<body>
+<div class="scanline"></div>
+<div class="shell" id="shell"></div>
+<div id="toast"></div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/utils.js"></script>
+<script>
+document.getElementById('shell').innerHTML = buildSidebar('reports.html') + `
+<div class="main">
+  ${buildTopbar('Forensic Reports','reports-search',`
+    <button class="btn btn-sm" id="gen-report-btn">+ Generate Report</button>
+  `)}
+  <div class="reports-layout">
+    <div class="reports-list-panel">
+      <div class="reports-list-head">
+        <h3>Reports</h3>
+        <span class="badge badge-muted" id="report-count">8</span>
+      </div>
+      <div class="reports-list" id="reports-list"></div>
+    </div>
+    <div class="reports-preview" id="reports-preview">
+      <div class="report-empty">
+        <div class="report-empty-icon">📋</div>
+        <div>Select a report to preview</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px">All reports include risk scores, entity maps,<br>evidence chains and analyst recommendations</div>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+const { reports, cases, nodes, links, predictedLinks, riskColor, riskLevel, esc, initials, avatarColor, findAssociates } = CG;
+let activeReport = null;
+
+/* ── Render Report List ─────────────────────────────────────── */
+function renderReportList(list) {
+  document.getElementById('reports-list').innerHTML = list.map(r => `
+    <div class="report-item${activeReport===r.id?' active':''}" data-rid="${r.id}">
+      <div class="report-item-head">
+        <span class="report-icon">${r.status==='final'?'📄':r.status==='draft'?'✏️':'⏳'}</span>
+        <span class="report-id">${r.id}</span>
+      </div>
+      <div class="report-name">${esc(r.name)}</div>
+      <div class="report-meta">
+        <span class="report-date">${r.date}</span>
+        <span class="report-status ${r.status}">${r.status[0].toUpperCase()+r.status.slice(1)}</span>
+        <span style="font-size:10px;color:var(--text-muted)">${r.analyst}</span>
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('.report-item').forEach(el => el.addEventListener('click', () => openReport(el.dataset.rid)));
+}
+
+/* ── Open Report ─────────────────────────────────────────────── */
+function openReport(rid) {
+  activeReport = rid;
+  renderReportList(reports);
+  const r = reports.find(x=>x.id===rid); if(!r) return;
+  const c = r.case ? cases.find(x=>x.id===r.case) : null;
+  const entity = r.entityId ? nodes.find(n=>n.id===r.entityId) : null;
+  const preview = document.getElementById('reports-preview');
+
+  let content = '';
+
+  if (entity) {
+    // Entity forensic report
+    const assoc = findAssociates(entity.id);
+    const assocNodes = assoc.map(a => nodes.find(n=>n.id===a)).filter(Boolean);
+    content = `
+    <div class="report-doc">
+      <div class="report-doc-header">
+        <div class="report-doc-logo">
+          <div class="mark">CG</div>
+          <div>
+            <div class="title">CrimeGraph AI</div>
+            <div class="sub">Forensic Intelligence Report</div>
+          </div>
+        </div>
+        <div class="report-doc-meta">
+          <div class="report-num">${r.id}</div>
+          <div class="report-date">${r.date} · ${r.analyst}</div>
+          <div style="margin-top:6px"><span class="report-status ${r.status}">${r.status[0].toUpperCase()+r.status.slice(1)}</span></div>
+        </div>
+      </div>
+
+      <div class="report-section">
+        <h3>Subject Entity</h3>
+        <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg)">
+          <div style="width:52px;height:52px;border-radius:12px;background:${avatarColor(entity.type)};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff">${initials(entity.id)}</div>
+          <div>
+            <div style="font-size:18px;font-weight:800">${esc(entity.id)}</div>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:2px">${entity.alias!=='—'?'Alias: "'+entity.alias+'" · ':''}${entity.type[0].toUpperCase()+entity.type.slice(1)} · ${entity.jurisdiction}</div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div style="font-size:28px;font-weight:800;font-family:var(--mono);color:${riskColor(entity.risk)}">${entity.risk}</div>
+            <div style="font-size:10.5px;color:var(--text-dim)">Risk Score</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-section">
+        <h3>Network Summary</h3>
+        <div class="network-summary-row">
+          <div class="nsrow-card"><div class="n">${entity.cases}</div><div class="l">Linked Cases</div></div>
+          <div class="nsrow-card"><div class="n">${entity.associates}</div><div class="l">Known Associates</div></div>
+          <div class="nsrow-card"><div class="n">${assocNodes.filter(n=>n.risk>70).length}</div><div class="l">High-Risk Links</div></div>
+        </div>
+        <div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px">
+          <div class="risk-label" style="font-size:11px;color:var(--text-dim);margin-bottom:6px;display:flex;justify-content:space-between"><span>Risk Quantification</span><span style="color:${riskColor(entity.risk)};font-weight:700">${entity.risk} / 100</span></div>
+          <div class="risk-bar-wrap"><div class="risk-bar-fill" style="width:${entity.risk}%;background:${riskColor(entity.risk)}"></div></div>
+        </div>
+      </div>
+
+      <div class="report-section">
+        <h3>Direct Associates</h3>
+        <div class="entity-grid">
+          ${assocNodes.map(n=>`
+          <div class="entity-mini">
+            <div class="name">${esc(n.id)}</div>
+            <div class="type">${n.type[0].toUpperCase()+n.type.slice(1)} · ${n.jurisdiction}</div>
+            <div class="risk-row">
+              <div class="risk-bar-wrap" style="flex:1;height:4px"><div class="risk-bar-fill" style="width:${n.risk}%;background:${riskColor(n.risk)}"></div></div>
+              <span class="risk-num" style="color:${riskColor(n.risk)}">${n.risk}</span>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="report-section">
+        <h3>Intelligence Findings</h3>
+        <div class="findings-list">
+          <div class="finding">
+            <div class="finding-title">Network Centrality</div>
+            <div class="finding-text">${esc(entity.id)} holds ${entity.associates} direct network connections placing it as a ${entity.associates>7?'primary':'secondary'} node. Last activity confirmed: ${entity.lastActivity}.</div>
+          </div>
+          <div class="finding">
+            <div class="finding-title">Risk Classification</div>
+            <div class="finding-text">Risk score ${entity.risk}/100 classified as <strong>${entity.risk>70?'HIGH RISK':entity.risk>40?'MEDIUM RISK':'LOW RISK'}</strong>. ${entity.risk>70?'Immediate investigative priority.':'Monitor and reassess.'}. Linked to ${entity.cases} case(s).</div>
+          </div>
+          <div class="finding">
+            <div class="finding-title">Jurisdictional Span</div>
+            <div class="finding-text">Entity operates within: ${entity.jurisdiction}. Cross-cluster links: ${assocNodes.filter(n=>n.cluster!==entity.cluster).length} detected.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-section">
+        <h3>Analyst Recommendations</h3>
+        <div class="recommendations">
+          ${entity.risk>70?'<div class="rec-item"><div class="rec-num">1</div><div class="rec-text">Priority investigation — assign dedicated surveillance team.</div></div>':''}
+          <div class="rec-item"><div class="rec-num">${entity.risk>70?2:1}</div><div class="rec-text">Cross-reference CDR data for all confirmed contact numbers with known associates.</div></div>
+          <div class="rec-item"><div class="rec-num">${entity.risk>70?3:2}</div><div class="rec-text">Validate predicted associations flagged by AI model before treating as actionable.</div></div>
+          <div class="rec-item"><div class="rec-num">${entity.risk>70?4:3}</div><div class="rec-text">Ensure all evidence chain steps are documented for court admissibility under BNSS provisions.</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:28px;padding:14px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);font-size:11px;color:var(--text-muted);line-height:1.6">
+        <strong style="color:var(--text-dim)">Disclaimer:</strong> This report is generated by CrimeGraph AI as an investigative aid only. All predictions and risk scores are leads for analyst validation, not determinations of guilt. Mandatory human-analyst review is required before any operational action.
+      </div>
+    </div>
+    <div class="report-actions">
+      <button class="btn btn-sm" onclick="window.print()">📄 Export PDF</button>
+      <button class="btn ghost btn-sm" onclick="showToast('Report copied to case log','ok')">📋 Copy to Case</button>
+      <button class="btn ghost btn-sm" onclick="showToast('Report shared with MHA portal','ok')">🔗 Share</button>
+      <div style="margin-left:auto;font-size:11px;color:var(--text-muted);align-self:center">Generated: ${r.date} · ${r.analyst}</div>
+    </div>`;
+  } else if (r.name.includes('Network Analysis') || r.name.includes('Simulation') || r.name.includes('Forecast') || r.name.includes('Audit')) {
+    // Network / system report
+    const totalEntities = nodes.length;
+    const highRisk = nodes.filter(n=>n.risk>70).length;
+    const totalLinks = links.length;
+    content = `
+    <div class="report-doc">
+      <div class="report-doc-header">
+        <div class="report-doc-logo">
+          <div class="mark">CG</div>
+          <div>
+            <div class="title">CrimeGraph AI</div>
+            <div class="sub">Network Analysis Report</div>
+          </div>
+        </div>
+        <div class="report-doc-meta">
+          <div class="report-num">${r.id}</div>
+          <div class="report-date">${r.date} · ${r.analyst}</div>
+          <div style="margin-top:6px"><span class="report-status ${r.status}">${r.status[0].toUpperCase()+r.status.slice(1)}</span></div>
+        </div>
+      </div>
+      <div class="report-section">
+        <h3>Executive Summary</h3>
+        <h4 style="margin-bottom:8px">${esc(r.name)}</h4>
+        <p>Analysis of the full criminal network across 3 jurisdictions (Maharashtra, Delhi NCR, Karnataka) covering ${totalEntities} entities and ${totalLinks} confirmed links, with ${predictedLinks.length} AI-predicted associations awaiting analyst validation.</p>
+      </div>
+      <div class="report-section">
+        <h3>Network Statistics</h3>
+        <div class="network-summary-row" style="grid-template-columns:repeat(4,1fr)">
+          <div class="nsrow-card"><div class="n">${totalEntities}</div><div class="l">Total Entities</div></div>
+          <div class="nsrow-card"><div class="n" style="color:var(--risk-high)">${highRisk}</div><div class="l">High Risk</div></div>
+          <div class="nsrow-card"><div class="n">${totalLinks}</div><div class="l">Confirmed Links</div></div>
+          <div class="nsrow-card"><div class="n" style="color:var(--accent)">${predictedLinks.length}</div><div class="l">AI Predicted</div></div>
+        </div>
+      </div>
+      <div class="report-section">
+        <h3>Cluster Analysis</h3>
+        <div class="findings-list">
+          ${['Maharashtra','Delhi NCR','Karnataka'].map((j,i)=>{
+            const clusterNodes = nodes.filter(n=>n.cluster===i);
+            const avgRisk = Math.round(clusterNodes.reduce((a,n)=>a+n.risk,0)/clusterNodes.length);
+            const maxRisk = Math.max(...clusterNodes.map(n=>n.risk));
+            return `<div class="finding">
+              <div class="finding-title">Cluster ${i+1} — ${j}</div>
+              <div class="finding-text">${clusterNodes.length} entities · Average risk: ${avgRisk} · Peak risk: ${maxRisk} · ${clusterNodes.filter(n=>n.risk>70).length} high-risk nodes identified.</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="report-section">
+        <h3>Predicted Associations (AI-Generated)</h3>
+        <div class="findings-list">
+          ${predictedLinks.map(p=>`
+          <div class="finding" style="border-left-color:var(--accent)">
+            <div class="finding-title">${esc(p.source)} → ${esc(p.target)} <span class="badge badge-blue" style="margin-left:6px">${Math.round(p.score*100)}% confidence</span></div>
+            <div class="finding-text">${esc(p.reasons[0])}. Status: ${p.status}.</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="report-section">
+        <h3>Recommendations</h3>
+        <div class="recommendations">
+          <div class="rec-item"><div class="rec-num">1</div><div class="rec-text">Validate all 6 AI-predicted associations against source CDR and CCTNS records before escalation.</div></div>
+          <div class="rec-item"><div class="rec-num">2</div><div class="rec-text">Priority investigation for high-risk nodes: Imran W. (Wolf, 95), Vikram S. (91), Sameer Q. (88).</div></div>
+          <div class="rec-item"><div class="rec-num">3</div><div class="rec-text">Request inter-state coordination between Maharashtra, Delhi NCR, and Karnataka cyber cells for unified response.</div></div>
+          <div class="rec-item"><div class="rec-num">4</div><div class="rec-text">Target Dockyard Gate 3 and Warehouse B-12 as primary transit points for concurrent surveillance.</div></div>
+        </div>
+      </div>
+      <div style="margin-top:28px;padding:14px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);font-size:11px;color:var(--text-muted);line-height:1.6">
+        <strong style="color:var(--text-dim)">Disclaimer:</strong> This report is generated by CrimeGraph AI as an investigative aid only. All predictions and risk scores are leads for analyst validation, not determinations of guilt.
+      </div>
+    </div>
+    <div class="report-actions">
+      <button class="btn btn-sm" onclick="window.print()">📄 Export PDF</button>
+      <button class="btn ghost btn-sm" onclick="showToast('Report shared with MHA portal','ok')">🔗 Share to MHA</button>
+      <div style="margin-left:auto;font-size:11px;color:var(--text-muted);align-self:center">Generated: ${r.date} · ${r.analyst}</div>
+    </div>`;
+  } else {
+    // Financial / org report
+    content = `
+    <div class="report-doc">
+      <div class="report-doc-header">
+        <div class="report-doc-logo">
+          <div class="mark">CG</div>
+          <div><div class="title">CrimeGraph AI</div><div class="sub">Intelligence Report</div></div>
+        </div>
+        <div class="report-doc-meta">
+          <div class="report-num">${r.id}</div>
+          <div class="report-date">${r.date} · ${r.analyst}</div>
+          <div style="margin-top:6px"><span class="report-status ${r.status}">${r.status[0].toUpperCase()+r.status.slice(1)}</span></div>
+        </div>
+      </div>
+      <div class="report-section">
+        <h3>Report Summary</h3>
+        <h4>${esc(r.name)}</h4>
+        <p style="margin-top:8px">This report ${r.status==='draft'?'is currently in draft — pending analyst review':'has been finalised and is ready for submission'}. ${r.case?'Associated case: '+r.case+'.':''}</p>
+      </div>
+      <div class="report-section">
+        <h3>Status</h3>
+        <div class="card" style="display:flex;align-items:center;gap:12px;padding:16px">
+          <div style="font-size:36px">${r.status==='final'?'✅':r.status==='draft'?'✏️':'⏳'}</div>
+          <div>
+            <div style="font-weight:700;font-size:14px">${r.status==='final'?'Finalised':'Pending Review'}</div>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:3px">${r.status==='final'?'This report is approved for submission to MHA / NCRB.':'This report requires analyst validation before submission.'}</div>
+          </div>
+          ${r.status!=='final'?`<button class="btn btn-sm" style="margin-left:auto" onclick="showToast('Report marked as final — submitted to MHA','ok')">Mark Final</button>`:''}
+        </div>
+      </div>
+    </div>
+    <div class="report-actions">
+      <button class="btn btn-sm" onclick="window.print()">📄 Export PDF</button>
+      <button class="btn ghost btn-sm" onclick="showToast('Shared with investigating team','ok')">🔗 Share</button>
+    </div>`;
+  }
+
+  preview.innerHTML = content;
+}
+
+/* ── Search ─────────────────────────────────────────────────── */
+document.getElementById('reports-search').addEventListener('input', e => {
+  const q=e.target.value.trim().toLowerCase();
+  const list=!q?reports:reports.filter(r=>r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q));
+  renderReportList(list);
+  document.getElementById('report-count').textContent=list.length;
+});
+
+/* ── Generate report modal ──────────────────────────────────── */
+function openGenerateReportModal() {
+  let overlay = document.getElementById('gen-report-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'gen-report-overlay';
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+    <div class="modal" style="max-width:540px">
+      <div class="modal-head">
+        <h2>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Generate Forensic Intelligence Report
+        </h2>
+        <button class="icon-btn" onclick="document.getElementById('gen-report-overlay').classList.remove('show')" title="Close">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Report Category</label>
+          <select class="field" id="gen-rep-cat">
+            <option value="entity">Individual Entity Forensic Dossier</option>
+            <option value="case">Case Linkage &amp; Evidence Audit</option>
+            <option value="disruption">Network Disruption &amp; Cluster Analysis</option>
+          </select>
+        </div>
+        <div class="form-group" id="gen-rep-target-group">
+          <label class="form-label">Subject Entity</label>
+          <select class="field" id="gen-rep-entity">
+            ${nodes.map(n => `<option value="${esc(n.id)}">${esc(n.id)} (${n.type}, Risk: ${n.risk})</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Lead Case (Optional)</label>
+          <select class="field" id="gen-rep-case">
+            <option value="">None (Independent dossier)</option>
+            ${cases.map(c => `<option value="${esc(c.id)}">${esc(c.id)} — ${esc(c.title)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assigned Analyst</label>
+          <input class="field" id="gen-rep-analyst" value="Insp. Mehra" placeholder="Analyst Name">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-sm w-full" id="do-gen-rep-btn">Generate &amp; Open Report</button>
+          <button class="btn ghost btn-sm" onclick="document.getElementById('gen-report-overlay').classList.remove('show')">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('show'); });
+
+    document.getElementById('do-gen-rep-btn').addEventListener('click', () => {
+      const cat = document.getElementById('gen-rep-cat').value;
+      const entName = document.getElementById('gen-rep-entity').value;
+      const caseId = document.getElementById('gen-rep-case').value || null;
+      const analyst = document.getElementById('gen-rep-analyst').value.trim() || 'Inspector Mehra';
+
+      const newId = `RPT-2024-00${reports.length + 1}`;
+      const newRep = {
+        id: newId,
+        name: cat === 'entity' ? `Forensic Report — ${entName}` : cat === 'case' ? `Case Evidence Audit — ${caseId || 'Syndicate'}` : `Network Disruption Analysis Report`,
+        case: caseId,
+        date: 'Oct 27, 2024',
+        analyst,
+        status: 'draft',
+        entityId: cat === 'entity' ? entName : null
+      };
+      reports.unshift(newRep);
+      renderReportList(reports);
+      document.getElementById('report-count').textContent = reports.length;
+      overlay.classList.remove('show');
+      openReport(newId);
+      showToast(`Report ${newId} created and opened`, 'ok');
+    });
+  }
+  overlay.classList.add('show');
+}
+
+document.getElementById('gen-report-btn').addEventListener('click', openGenerateReportModal);
+
+/* ── Init & URL Parameter Handling ──────────────────────────── */
+renderReportList(reports);
+
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const repId = params.get('id');
+  const entityParam = params.get('entity');
+  const caseParam = params.get('case');
+
+  if (repId) {
+    const target = reports.find(r => r.id.toLowerCase() === repId.toLowerCase());
+    if (target) { openReport(target.id); return; }
+  }
+
+  if (entityParam) {
+    const target = reports.find(r => r.entityId && r.entityId.toLowerCase() === entityParam.toLowerCase());
+    if (target) {
+      openReport(target.id);
+      showToast(`Loaded dossier for ${entityParam}`, 'ok');
+      return;
+    } else {
+      // Create dynamically if not already in pre-defined reports
+      const entityObj = nodes.find(n => n.id.toLowerCase() === entityParam.toLowerCase());
+      if (entityObj) {
+        const dynId = `RPT-2024-00${reports.length + 1}`;
+        const dynRep = {
+          id: dynId,
+          name: `Forensic Report — ${entityObj.id}`,
+          case: null,
+          date: 'Oct 27, 2024',
+          analyst: 'Insp. Mehra',
+          status: 'final',
+          entityId: entityObj.id
+        };
+        reports.unshift(dynRep);
+        renderReportList(reports);
+        openReport(dynId);
+        showToast(`Forensic dossier generated for ${entityObj.id}`, 'ok');
+        return;
+      }
+    }
+  }
+
+  if (caseParam) {
+    const target = reports.find(r => r.case && r.case.toLowerCase() === caseParam.toLowerCase());
+    if (target) {
+      openReport(target.id);
+      showToast(`Loaded report for Case ${caseParam}`, 'ok');
+      return;
+    }
+  }
+
+  // Default to first report if no query param
+  if (reports.length > 0) {
+    openReport(reports[0].id);
+  }
+});
+</script>
+</body>
+</html>
