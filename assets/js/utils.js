@@ -56,6 +56,11 @@ function buildSidebar(currentPage) {
           <span>${n.label}</span>
           ${n.badge?`<span class="nav-badge">${n.badge}</span>`:''}
         </a>`).join('')}
+      <a href="javascript:void(0)" class="nav-item" onclick="openCaseUploaderSuite();">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>Upload Case File</span>
+        <span class="nav-badge" style="background:var(--accent);color:#fff">AI</span>
+      </a>
       <div class="nav-section-label" style="margin-top:10px">System</div>
       <a href="javascript:void(0)" class="nav-item" id="sidebar-settings-btn" onclick="openSettingsModal()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 1 0 4.93 19.07 10 10 0 0 0 19.07 4.93z"/></svg>
@@ -207,6 +212,7 @@ function openSettingsModal() {
 
         <div style="display:flex;gap:8px;margin-top:10px">
           <button class="btn btn-sm w-full" onclick="saveSettings()">Save Configuration</button>
+          <button class="btn ghost btn-sm danger" onclick="if(confirm('Reset all ingested case files and restore default dataset?')) CG.resetToDefault();">Reset Data</button>
           <button class="btn ghost btn-sm" onclick="closeSettingsModal()">Cancel</button>
         </div>
       </div>
@@ -225,6 +231,25 @@ function closeSettingsModal() {
 function saveSettings() {
   closeSettingsModal();
   showToast('Settings & model parameters successfully applied', 'ok');
+}
+
+/* ── Case Uploader Modal Suite ────────────────────────────── */
+function openCaseUploaderSuite() {
+  if (!document.getElementById('uploader-css')) {
+    const link = document.createElement('link');
+    link.id = 'uploader-css';
+    link.rel = 'stylesheet';
+    link.href = 'assets/css/uploader.css';
+    document.head.appendChild(link);
+  }
+  if (window.CaseUploader) {
+    CaseUploader.open();
+  } else {
+    const s = document.createElement('script');
+    s.src = 'assets/js/case-uploader.js';
+    s.onload = () => CaseUploader.open();
+    document.body.appendChild(s);
+  }
 }
 
 /* ── NLP Data Ingestion Modal ─────────────────────────────── */

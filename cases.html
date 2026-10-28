@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/global.css">
 <link rel="stylesheet" href="assets/css/cases.css">
+<link rel="stylesheet" href="assets/css/uploader.css">
 </head>
 <body>
 <div class="scanline"></div>
@@ -96,11 +97,16 @@
 
 <script src="assets/js/data.js"></script>
 <script src="assets/js/utils.js"></script>
+<script src="assets/js/case-uploader.js"></script>
 <script>
 document.getElementById('shell').innerHTML = buildSidebar('cases.html') + `
 <div class="main">
   ${buildTopbar('Case Management','cases-search',`
-    <button class="btn btn-sm" id="new-case-btn">+ New Case</button>
+    <button class="btn btn-sm" onclick="CaseUploader.open()" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Case File
+    </button>
+    <button class="btn ghost btn-sm" id="new-case-btn">+ New Manual Case</button>
   `)}
   <div style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden" id="cases-root"></div>
 </div>`;
@@ -114,9 +120,12 @@ function renderCases(list) {
   const root = document.getElementById('cases-root');
   root.innerHTML = `
   <div class="cases-toolbar">
-    <h2>All Cases</h2>
+    <h2>All Active Investigations</h2>
     <div class="cases-count">${list.length} case${list.length!==1?'s':''}</div>
     <div class="spacer" style="flex:1"></div>
+    <button class="btn btn-sm" onclick="CaseUploader.open()" style="padding:5px 11px;font-size:11.5px">
+      📁 Upload Digital FIR
+    </button>
     <select class="field" style="width:auto" id="sort-select">
       <option value="risk">Sort: Highest Risk</option>
       <option value="date">Sort: Most Recent</option>
@@ -165,7 +174,25 @@ function renderCases(list) {
         <button class="btn btn-sm" id="apply-case-filters">Apply Filters</button>
       </div>
     </div>
-    <div class="cases-main" id="cases-list"></div>
+    <div class="cases-main" id="cases-list-wrap">
+      <!-- AI Case Ingestion Hero Banner -->
+      <div class="case-upload-hero-banner">
+        <div class="cuh-left">
+          <div class="cuh-icon">⚡</div>
+          <div class="cuh-text">
+            <h3>Digital Case File Ingestion &amp; Automated Extraction</h3>
+            <p>Upload electronic copies of FIRs, case diaries, or interrogation transcripts. The system resolves entities, maps syndicate bridges, and computes GraphSAGE risk scores automatically.</p>
+          </div>
+        </div>
+        <div class="cuh-actions">
+          <button class="btn btn-sm" onclick="CaseUploader.open()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Digital Case
+          </button>
+        </div>
+      </div>
+      <div id="cases-list" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
   </div>`;
 
   renderCaseCards(list);
@@ -362,6 +389,19 @@ document.getElementById('cases-search').addEventListener('input', e => {
 
 /* ── Init ───────────────────────────────────────────────────── */
 renderCases(cases);
+
+// Handle URL parameter to auto-open case drawer
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const openCid = params.get('open');
+  if (openCid) {
+    const match = cases.find(c => c.id.toLowerCase() === openCid.toLowerCase());
+    if (match) {
+      setTimeout(() => openCaseDrawer(match.id), 300);
+      showToast(`Loaded Case ${match.id} details`, 'ok');
+    }
+  }
+});
 </script>
 </body>
 </html>

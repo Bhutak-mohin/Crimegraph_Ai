@@ -37,9 +37,11 @@
 - **Bidirectional Graph Linkage:** Click any case to isolate its suspect roster directly in the network graph; inspect any node to see all related FIRs.
 - **Dynamic Case Registration:** Add new cases with instant assignment into the knowledge graph.
 
-### 5. Multi-Source NLP Ingestion Pipeline
-- **Unstructured Text Resolution:** Paste raw FIRs or case diaries and run NER extraction to resolve suspects, vehicles, phone numbers, and transit points.
+### 5. Digital Case File Ingestion & Multi-Source AI Extraction
+- **Drag-and-Drop Digital Case Upload:** Officers can upload PDF, DOCX, CCTNS JSON, TXT, or scanned case files.
+- **Automated Document OCR & Entity Resolution:** Identifies FIR numbers, penal codes (BNS, NDPS, PMLA), Persons of Interest (POIs), aliases, shell corporations, vehicles, and transit nodes.
 - **Cross-Jurisdiction Bridge Detection:** Automatically highlights inter-state syndicate links (e.g., Maharashtra contraband routed via Karnataka maritime gates).
+- **Instant Cross-Feature Activation:** Ingested files instantly update the live knowledge graph, register into case management, feed GraphSAGE predictive intelligence, enable network disruption simulations, and generate court-admissible forensic dossiers.
 
 ### 6. Forensic Intelligence Reports & Evidence Export
 - **Subject Forensic Dossiers:** Comprehensive criminal history, associate risk distribution, and intelligence recommendations.
@@ -63,10 +65,12 @@ Crimegraph_Ai/
     │   ├── landing.css          # Landing hero, preview, and feature grid styles
     │   ├── dashboard.css        # Console toolbars, D3 graph containers, disruption cards
     │   ├── cases.css            # Case grid, drawer overlay, and timeline styling
-    │   └── reports.css          # Dossier document layouts & court print styles
+    │   ├── reports.css          # Dossier document layouts & court print styles
+    │   └── uploader.css         # Digital case file drag-and-drop & AI analysis styles
     └── js/
-        ├── data.js              # Knowledge graph data store (nodes, links, cases, predictions)
-        └── utils.js             # Shared helpers, toast alerts, settings modal & NLP parser
+        ├── data.js              # Knowledge graph data store & state persistence
+        ├── utils.js             # Shared helpers, toast alerts, settings modal & navigation
+        └── case-uploader.js     # Digital case ingestion engine & feature executor
 ```
 
 ---

@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <link rel="stylesheet" href="assets/css/global.css">
 <link rel="stylesheet" href="assets/css/reports.css">
+<link rel="stylesheet" href="assets/css/uploader.css">
 </head>
 <body>
 <div class="scanline"></div>
@@ -18,11 +19,16 @@
 
 <script src="assets/js/data.js"></script>
 <script src="assets/js/utils.js"></script>
+<script src="assets/js/case-uploader.js"></script>
 <script>
 document.getElementById('shell').innerHTML = buildSidebar('reports.html') + `
 <div class="main">
   ${buildTopbar('Forensic Reports','reports-search',`
-    <button class="btn btn-sm" id="gen-report-btn">+ Generate Report</button>
+    <button class="btn btn-sm" onclick="CaseUploader.open()" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Case File
+    </button>
+    <button class="btn ghost btn-sm" id="gen-report-btn">+ Generate Report</button>
   `)}
   <div class="reports-layout">
     <div class="reports-list-panel">

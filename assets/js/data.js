@@ -229,6 +229,145 @@ function findAssociates(id) {
   return out;
 }
 
+/* ── State Persistence & Ingestion Engine ───────────────── */
+const STORAGE_KEY = 'crimegraph_ai_state_v1';
+
+function saveState() {
+  try {
+    const dataToSave = {
+      cases,
+      reports,
+      forecastSeries,
+      predictedLinks: predictedLinks.map(p => ({
+        source: typeof p.source === 'object' ? p.source.id : p.source,
+        target: typeof p.target === 'object' ? p.target.id : p.target,
+        score: p.score,
+        status: p.status,
+        reasons: p.reasons
+      })),
+      nodes: nodes.map(n => ({
+        id: n.id, alias: n.alias, type: n.type, risk: n.risk,
+        cluster: n.cluster, cases: n.cases, associates: n.associates,
+        lastActivity: n.lastActivity, jurisdiction: n.jurisdiction,
+        lat: n.lat, lng: n.lng
+      })),
+      links: links.map(l => ({
+        source: typeof l.source === 'object' ? l.source.id : l.source,
+        target: typeof l.target === 'object' ? l.target.id : l.target,
+        weak: !!l.weak
+      }))
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  } catch (err) {
+    console.warn('Could not persist CrimeGraph state to localStorage:', err);
+  }
+}
+
+function loadSavedState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (parsed.cases && Array.isArray(parsed.cases)) {
+      cases.length = 0; parsed.cases.forEach(c => cases.push(c));
+    }
+    if (parsed.nodes && Array.isArray(parsed.nodes)) {
+      nodes.length = 0; parsed.nodes.forEach(n => nodes.push(n));
+    }
+    if (parsed.links && Array.isArray(parsed.links)) {
+      links.length = 0; parsed.links.forEach(l => links.push(l));
+    }
+    if (parsed.predictedLinks && Array.isArray(parsed.predictedLinks)) {
+      predictedLinks.length = 0; parsed.predictedLinks.forEach(p => predictedLinks.push(p));
+    }
+    if (parsed.reports && Array.isArray(parsed.reports)) {
+      reports.length = 0; parsed.reports.forEach(r => reports.push(r));
+    }
+  } catch (err) {
+    console.warn('Could not restore CrimeGraph state:', err);
+  }
+}
+
+// Hydrate saved state on load
+loadSavedState();
+
+function ingestCaseDossier(dossier) {
+  if (!dossier) return false;
+  
+  // 1. Ingest Case
+  if (dossier.caseData) {
+    const existingIdx = cases.findIndex(c => c.id === dossier.caseData.id);
+    if (existingIdx >= 0) {
+      cases[existingIdx] = dossier.caseData;
+    } else {
+      cases.unshift(dossier.caseData);
+    }
+  }
+
+  // 2. Ingest Nodes / Entities
+  if (Array.isArray(dossier.entities)) {
+    dossier.entities.forEach(newEnt => {
+      const match = nodes.find(n => n.id.toLowerCase() === newEnt.id.toLowerCase());
+      if (match) {
+        Object.assign(match, newEnt);
+      } else {
+        nodes.push(newEnt);
+      }
+    });
+  }
+
+  // 3. Ingest Links / Connections
+  if (Array.isArray(dossier.links)) {
+    dossier.links.forEach(nl => {
+      const sId = typeof nl.source === 'object' ? nl.source.id : nl.source;
+      const tId = typeof nl.target === 'object' ? nl.target.id : nl.target;
+      const exists = links.some(l => {
+        const curS = typeof l.source === 'object' ? l.source.id : l.source;
+        const curT = typeof l.target === 'object' ? l.target.id : l.target;
+        return (curS === sId && curT === tId) || (curS === tId && curT === sId);
+      });
+      if (!exists) {
+        links.push({ source: sId, target: tId, weak: !!nl.weak });
+      }
+    });
+  }
+
+  // 4. Ingest Predicted Links
+  if (Array.isArray(dossier.predictions)) {
+    dossier.predictions.forEach(np => {
+      const sId = typeof np.source === 'object' ? np.source.id : np.source;
+      const tId = typeof np.target === 'object' ? np.target.id : np.target;
+      const exists = predictedLinks.some(p => {
+        const curS = typeof p.source === 'object' ? p.source.id : p.source;
+        const curT = typeof p.target === 'object' ? p.target.id : p.target;
+        return (curS === sId && curT === tId) || (curS === tId && curT === sId);
+      });
+      if (!exists) {
+        predictedLinks.unshift(np);
+      }
+    });
+  }
+
+  // 5. Ingest Forensic Report
+  if (dossier.report) {
+    const rIdx = reports.findIndex(r => r.id === dossier.report.id);
+    if (rIdx >= 0) {
+      reports[rIdx] = dossier.report;
+    } else {
+      reports.unshift(dossier.report);
+    }
+  }
+
+  saveState();
+  return true;
+}
+
+function resetToDefault() {
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
 return { nodes, links, predictedLinks, cases, reports, forecastSeries,
-         riskColor, riskLevel, riskLabel, avatarColor, initials, esc, findAssociates };
+         riskColor, riskLevel, riskLabel, avatarColor, initials, esc, findAssociates,
+         ingestCaseDossier, resetToDefault, saveState };
 })();
