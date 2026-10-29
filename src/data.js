@@ -1,0 +1,88 @@
+export const nodes = [
+  { id: 'Rohan K.', alias: 'Circuit', type: 'person', risk: 82, cluster: 0, cases: 4, associates: 7, lastActivity: '3 days ago', jurisdiction: 'Maharashtra', lat: 19.08, lng: 72.88 },
+  { id: 'Vikram S.', alias: 'Bhaiya', type: 'person', risk: 91, cluster: 0, cases: 6, associates: 9, lastActivity: '1 day ago', jurisdiction: 'Maharashtra', lat: 19.22, lng: 72.97 },
+  { id: 'Ajay M.', alias: 'Tinku', type: 'person', risk: 58, cluster: 0, cases: 2, associates: 4, lastActivity: '9 days ago', jurisdiction: 'Maharashtra', lat: 19.18, lng: 72.95 },
+  { id: 'Priya D.', alias: '—', type: 'person', risk: 34, cluster: 0, cases: 1, associates: 3, lastActivity: '21 days ago', jurisdiction: 'Maharashtra', lat: 19.05, lng: 72.92 },
+  { id: 'Warehouse B-12', alias: '—', type: 'location', risk: 66, cluster: 0, cases: 3, associates: 5, lastActivity: '3 days ago', jurisdiction: 'Thane', lat: 19.21, lng: 72.98 },
+  { id: 'MH-04 AB 7791', alias: '—', type: 'vehicle', risk: 47, cluster: 0, cases: 2, associates: 2, lastActivity: '6 days ago', jurisdiction: 'Maharashtra', lat: 19.10, lng: 72.85 },
+  { id: 'Ravi B.', alias: '—', type: 'person', risk: 22, cluster: 0, cases: 1, associates: 1, lastActivity: '40 days ago', jurisdiction: 'Maharashtra', lat: 19.06, lng: 72.90 },
+  { id: 'Kiran V.', alias: '—', type: 'person', risk: 37, cluster: 0, cases: 1, associates: 2, lastActivity: '16 days ago', jurisdiction: 'Maharashtra', lat: 19.15, lng: 72.88 },
+  { id: 'Sameer Q.', alias: 'Q', type: 'person', risk: 88, cluster: 1, cases: 5, associates: 8, lastActivity: '2 days ago', jurisdiction: 'Delhi NCR', lat: 28.63, lng: 77.22 },
+  { id: 'Farhan T.', alias: 'Chotu', type: 'person', risk: 73, cluster: 1, cases: 3, associates: 6, lastActivity: '4 days ago', jurisdiction: 'Delhi NCR', lat: 28.65, lng: 77.20 },
+  { id: 'Naveen R.', alias: '—', type: 'person', risk: 41, cluster: 1, cases: 1, associates: 3, lastActivity: '14 days ago', jurisdiction: 'Delhi NCR', lat: 28.61, lng: 77.25 },
+  { id: 'Kavita J.', alias: '—', type: 'person', risk: 29, cluster: 1, cases: 1, associates: 2, lastActivity: '30 days ago', jurisdiction: 'Delhi NCR', lat: 28.58, lng: 77.18 },
+  { id: 'Orbit Traders Pvt Ltd', alias: '—', type: 'org', risk: 69, cluster: 1, cases: 2, associates: 4, lastActivity: '5 days ago', jurisdiction: 'Delhi NCR', lat: 28.67, lng: 77.23 },
+  { id: 'DL-8C XQ 2210', alias: '—', type: 'vehicle', risk: 38, cluster: 1, cases: 1, associates: 2, lastActivity: '11 days ago', jurisdiction: 'Delhi NCR', lat: 28.62, lng: 77.21 },
+  { id: 'Transit Hub 9', alias: '—', type: 'location', risk: 52, cluster: 1, cases: 2, associates: 3, lastActivity: '7 days ago', jurisdiction: 'Delhi NCR', lat: 28.69, lng: 77.15 },
+  { id: 'Anjali S.', alias: '—', type: 'person', risk: 18, cluster: 1, cases: 1, associates: 1, lastActivity: '55 days ago', jurisdiction: 'Delhi NCR', lat: 28.56, lng: 77.19 },
+  { id: 'Imran W.', alias: 'Wolf', type: 'person', risk: 95, cluster: 2, cases: 7, associates: 11, lastActivity: 'Today', jurisdiction: 'Karnataka', lat: 12.97, lng: 77.59 },
+  { id: 'Suresh N.', alias: 'Pandit', type: 'person', risk: 77, cluster: 2, cases: 4, associates: 7, lastActivity: '1 day ago', jurisdiction: 'Karnataka', lat: 12.95, lng: 77.57 },
+  { id: 'Deepak L.', alias: '—', type: 'person', risk: 63, cluster: 2, cases: 3, associates: 5, lastActivity: '5 days ago', jurisdiction: 'Karnataka', lat: 12.98, lng: 77.61 },
+  { id: 'Meena P.', alias: '—', type: 'person', risk: 45, cluster: 2, cases: 2, associates: 3, lastActivity: '12 days ago', jurisdiction: 'Karnataka', lat: 12.93, lng: 77.55 },
+  { id: 'Nexus Logistics', alias: '—', type: 'org', risk: 71, cluster: 2, cases: 3, associates: 6, lastActivity: '2 days ago', jurisdiction: 'Karnataka', lat: 12.99, lng: 77.60 },
+  { id: 'KA-05 MN 4432', alias: '—', type: 'vehicle', risk: 56, cluster: 2, cases: 2, associates: 2, lastActivity: '8 days ago', jurisdiction: 'Karnataka', lat: 12.96, lng: 77.58 },
+  { id: 'Dockyard Gate 3', alias: '—', type: 'location', risk: 74, cluster: 2, cases: 4, associates: 6, lastActivity: '1 day ago', jurisdiction: 'Karnataka', lat: 12.91, lng: 77.54 },
+  { id: 'Old Mill Road', alias: '—', type: 'location', risk: 31, cluster: 2, cases: 1, associates: 2, lastActivity: '18 days ago', jurisdiction: 'Karnataka', lat: 12.94, lng: 77.62 },
+];
+
+export const links = [
+  { source: 'Rohan K.', target: 'Vikram S.', weak: false },
+  { source: 'Rohan K.', target: 'Ajay M.', weak: false },
+  { source: 'Rohan K.', target: 'Warehouse B-12', weak: false },
+  { source: 'Vikram S.', target: 'Warehouse B-12', weak: false },
+  { source: 'Vikram S.', target: 'MH-04 AB 7791', weak: false },
+  { source: 'Ajay M.', target: 'Priya D.', weak: true },
+  { source: 'Ajay M.', target: 'MH-04 AB 7791', weak: true },
+  { source: 'Priya D.', target: 'Ravi B.', weak: true },
+  { source: 'Rohan K.', target: 'Kiran V.', weak: true },
+  { source: 'Vikram S.', target: 'Sameer Q.', weak: true },
+  { source: 'Sameer Q.', target: 'Farhan T.', weak: false },
+  { source: 'Sameer Q.', target: 'Orbit Traders Pvt Ltd', weak: false },
+  { source: 'Farhan T.', target: 'Naveen R.', weak: false },
+  { source: 'Farhan T.', target: 'Transit Hub 9', weak: false },
+  { source: 'Naveen R.', target: 'Kavita J.', weak: true },
+  { source: 'Orbit Traders Pvt Ltd', target: 'DL-8C XQ 2210', weak: true },
+  { source: 'Transit Hub 9', target: 'DL-8C XQ 2210', weak: true },
+  { source: 'Kavita J.', target: 'Anjali S.', weak: true },
+  { source: 'Sameer Q.', target: 'Imran W.', weak: true },
+  { source: 'Imran W.', target: 'Suresh N.', weak: false },
+  { source: 'Imran W.', target: 'Deepak L.', weak: false },
+  { source: 'Imran W.', target: 'Dockyard Gate 3', weak: false },
+  { source: 'Suresh N.', target: 'Nexus Logistics', weak: false },
+  { source: 'Suresh N.', target: 'KA-05 MN 4432', weak: true },
+  { source: 'Deepak L.', target: 'Meena P.', weak: true },
+  { source: 'Nexus Logistics', target: 'Dockyard Gate 3', weak: false },
+  { source: 'Meena P.', target: 'Old Mill Road', weak: true },
+  { source: 'Deepak L.', target: 'KA-05 MN 4432', weak: true },
+];
+
+export const predictedLinks = [
+  { source: 'Rohan K.', target: 'Sameer Q.', score: 0.91, status: 'Pending', reasons: ['2-hop bridge across Maharashtra ↔ Delhi NCR', 'Shared weak-link via Vikram S.', 'Similar case/associate structure'] },
+  { source: 'Vikram S.', target: 'Imran W.', score: 0.88, status: 'Pending', reasons: ['Cross-cluster centrality similarity', 'Shared high-risk connector pattern', 'Recent activity overlap'] },
+  { source: 'Ajay M.', target: 'Orbit Traders Pvt Ltd', score: 0.82, status: 'Pending', reasons: ['Common vehicle-linked pathway', '2-hop proximity through active cluster', 'Organisation appears in parallel network structure'] },
+  { source: 'Warehouse B-12', target: 'MH-04 AB 7791', score: 0.79, status: 'Pending', reasons: ['Repeated co-location pattern', 'Vehicle proximity in observed transit paths', 'Temporal activity similarity'] },
+  { source: 'Farhan T.', target: 'Nexus Logistics', score: 0.76, status: 'Pending', reasons: ['Role similarity across clusters', 'Comparable degree/centrality profile', 'Cross-jurisdiction pathway via bridge'] },
+  { source: 'Transit Hub 9', target: 'Dockyard Gate 3', score: 0.71, status: 'Pending', reasons: ['Location-to-location structural similarity', 'Transport-node role similarity', 'Emerging cross-cluster path identified'] },
+];
+
+export const cases = [
+  { id: 'MH-2024-0047', title: 'Operation Chain Link', status: 'Active', risk: 91, riskLevel: 'high', cluster: 0, jurisdiction: 'Maharashtra', type: 'Organised Crime', opened: '12 Sep 2024', lastUpdate: '3 days ago', desc: 'Multi-state drug trafficking network centred around Thane warehouse complex. 6 FIRs consolidated.', suspects: ['Rohan K.', 'Vikram S.', 'Ajay M.', 'Warehouse B-12', 'MH-04 AB 7791'], entities: 9, linkedCases: 3, icon: '🔗', timeline: [{ date: 'Oct 24, 2024', text: 'Surveillance confirms vehicle...' }], findings: ['Rohan K. identified as network orchestrator', 'Warehouse B-12 confirmed as primary transit point'], recommendations: ['Priority surveillance on Vikram S.', 'Monitor Warehouse B-12'] },
+  { id: 'DL-2024-0091', title: 'Operation Dark Transit', status: 'Active', risk: 88, riskLevel: 'high', cluster: 1, jurisdiction: 'Delhi NCR', type: 'Financial Crime', opened: '5 Oct 2024', lastUpdate: '2 days ago', desc: 'Shell company linked to hawala network operating through Orbit Traders Pvt Ltd.', suspects: ['Sameer Q.', 'Farhan T.', 'Orbit Traders Pvt Ltd', 'Transit Hub 9', 'DL-8C XQ 2210'], entities: 7, linkedCases: 2, icon: '🏦', timeline: [{ date: 'Oct 25, 2024', text: 'Financial transaction pattern analysis reveals ₹2.4Cr movement.' }], findings: ['Orbit Traders Pvt Ltd used as a financial intermediary'], recommendations: ['Freeze Orbit Traders financial accounts', 'Place Transit Hub 9 under surveillance'] },
+  { id: 'KA-2024-0033', title: 'Operation Dockside Wolf', status: 'Active', risk: 95, riskLevel: 'high', cluster: 2, jurisdiction: 'Karnataka', type: 'Smuggling', opened: '2 Aug 2024', lastUpdate: 'Today', desc: 'Imran W. leads Karnataka-based smuggling ring using Nexus Logistics as a front.', suspects: ['Imran W.', 'Suresh N.', 'Deepak L.', 'Nexus Logistics', 'Dockyard Gate 3', 'KA-05 MN 4432'], entities: 8, linkedCases: 4, icon: '⚓', timeline: [{ date: 'Oct 27, 2024', text: 'Imran W. spotted near Dockyard Gate 3.' }], findings: ['Imran W. is the highest-risk entity in the network'], recommendations: ['Immediate interception — Imran W. is active today'] },
+  { id: 'MH-2024-0061', title: 'Vehicle Nexus Probe', status: 'Under Review', risk: 54, riskLevel: 'med', cluster: 0, jurisdiction: 'Maharashtra', type: 'Vehicle Crime', opened: '20 Sep 2024', lastUpdate: '6 days ago', desc: 'Probe into vehicle MH-04 AB 7791 linked to 2 case clusters.', suspects: ['MH-04 AB 7791', 'Ajay M.', 'Vikram S.'], entities: 3, linkedCases: 2, icon: '🚗', timeline: [{ date: 'Oct 21, 2024', text: 'GPS analysis shows vehicle visited Warehouse B-12.' }], findings: ['MH-04 AB 7791 appears in FIRs from 2 different clusters'], recommendations: ['Conduct ownership verification through RTO'] },
+  { id: 'DL-2024-0105', title: 'Peripheral Contact Sweep', status: 'Closed', risk: 28, riskLevel: 'low', cluster: 1, jurisdiction: 'Delhi NCR', type: 'Surveillance', opened: '1 Sep 2024', lastUpdate: '30 days ago', desc: 'Surveillance on Kavita J. and Anjali S. — peripheral contacts of Delhi NCR cluster.', suspects: ['Kavita J.', 'Anjali S.', 'Naveen R.'], entities: 3, linkedCases: 1, icon: '👁️', timeline: [{ date: 'Sep 27, 2024', text: 'Surveillance concluded.' }], findings: ['No direct criminal activity identified'], recommendations: ['Close active surveillance on Kavita J. and Anjali S.'] },
+  { id: 'KA-2024-0051', title: 'Logistics Front Audit', status: 'Under Review', risk: 71, riskLevel: 'high', cluster: 2, jurisdiction: 'Karnataka', type: 'Financial Crime', opened: '15 Sep 2024', lastUpdate: '2 days ago', desc: 'Nexus Logistics flagged for suspicious GSTIN activity and irregular consignment patterns.', suspects: ['Nexus Logistics', 'Suresh N.', 'Dockyard Gate 3'], entities: 4, linkedCases: 3, icon: '📦', timeline: [{ date: 'Oct 25, 2024', text: 'GSTIN audit confirms irregular consignments.' }], findings: ['3 consignments with no matching import documentation'], recommendations: ['Cross-reference with ED for FEMA violations'] },
+];
+
+export const reports = [
+  { id: 'RPT-2024-001', name: 'Forensic Report — Rohan K. (Circuit)', case: 'MH-2024-0047', date: 'Oct 24, 2024', analyst: 'Inspector Mehra', status: 'final', entityId: 'Rohan K.' },
+  { id: 'RPT-2024-002', name: 'Network Analysis — Operation Chain Link', case: 'MH-2024-0047', date: 'Oct 22, 2024', analyst: 'Inspector Mehra', status: 'final', entityId: null },
+  { id: 'RPT-2024-003', name: 'Forensic Report — Imran W. (Wolf)', case: 'KA-2024-0033', date: 'Oct 26, 2024', analyst: 'Insp. Sharma', status: 'final', entityId: 'Imran W.' },
+  { id: 'RPT-2024-004', name: 'Predictive Forecast — 14-Day Horizon', case: null, date: 'Oct 25, 2024', analyst: 'System', status: 'pending', entityId: null },
+  { id: 'RPT-2024-005', name: 'Network Disruption Simulation Report', case: 'KA-2024-0033', date: 'Oct 23, 2024', analyst: 'Inspector Mehra', status: 'final', entityId: null },
+  { id: 'RPT-2024-006', name: 'Forensic Report — Sameer Q.', case: 'DL-2024-0091', date: 'Oct 21, 2024', analyst: 'Insp. Kapoor', status: 'draft', entityId: 'Sameer Q.' },
+  { id: 'RPT-2024-007', name: 'Orbit Traders Financial Trace', case: 'DL-2024-0091', date: 'Oct 18, 2024', analyst: 'Insp. Kapoor', status: 'draft', entityId: 'Orbit Traders Pvt Ltd' },
+  { id: 'RPT-2024-008', name: 'Logistics Front Audit Summary', case: 'KA-2024-0051', date: 'Oct 15, 2024', analyst: 'Insp. Sharma', status: 'pending', entityId: 'Nexus Logistics' },
+];
+
+export const forecastSeries = [34, 38, 39, 43, 45, 48, 52, 55, 58, 61, 65, 68, 72, 75];

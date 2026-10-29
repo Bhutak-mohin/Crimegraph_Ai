@@ -50,57 +50,42 @@
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 Crimegraph_Ai/
-├── index.html                   # High-impact landing page & interactive walkthrough
-├── dashboard.html               # Live investigator console (Graph & Predictive tabs)
-├── cases.html                   # Case management & suspect drawer
-├── reports.html                 # Forensic intelligence dossiers & PDF report generator
-├── README.md                    # System documentation
-└── assets/
-    ├── css/
-    │   ├── global.css           # Design system tokens, buttons, badges, modals, fonts
-    │   ├── landing.css          # Landing hero, preview, and feature grid styles
-    │   ├── dashboard.css        # Console toolbars, D3 graph containers, disruption cards
-    │   ├── cases.css            # Case grid, drawer overlay, and timeline styling
-    │   ├── reports.css          # Dossier document layouts & court print styles
-    │   └── uploader.css         # Digital case file drag-and-drop & AI analysis styles
-    └── js/
-        ├── data.js              # Knowledge graph data store & state persistence
-        ├── utils.js             # Shared helpers, toast alerts, settings modal & navigation
-        └── case-uploader.js     # Digital case ingestion engine & feature executor
+├── index.html
+├── package.json
+├── src/
+│   ├── App.jsx                  # React routes, role-aware UI, graph and page behavior
+│   ├── data.js                  # Sample graph, case, and report data
+│   └── main.jsx                 # React entry point
+├── assets/css/                  # Shared application styles
+└── README.md
 ```
 
----
+## Run Locally
 
-## 🚀 How to Run
+Install dependencies and start the Vite development server:
 
-1. Clone or download this repository:
-   ```bash
-   git clone <repo-url>
-   cd Crimegraph_Ai
-   ```
+```bash
+npm install
+npm run dev
+```
 
-2. Open [`index.html`](file:///d:/Mohin/Universal/Crimegraph_Ai/index.html) directly in any modern web browser (Google Chrome, Microsoft Edge, Brave, Firefox).
-   *No build steps, node_modules, or package installations are required!*
+Open the local URL printed by Vite. Create a production build with `npm run build`; preview it with `npm run preview`.
 
-3. Or serve locally with any static web server:
-   ```bash
-   # Python
-   python -m http.server 8000
+## Deployment
 
-   # Node.js npx
-   npx serve .
-   ```
-   Navigate to `http://localhost:8000`.
+Build the React application with `npm run build` and publish the generated `dist/` directory. Vercel and Netlify configuration files are included; both rewrite application routes to the React entry point. For GitHub Pages, build the app and publish `dist/` using a GitHub Actions workflow.
 
 ---
 
-## 🔒 Security & Privacy Compliance
+## �🔒 Security & Privacy Compliance
 
-- **Role-Based Access Control (RBAC):** Investigator badge authentication with role segmentation (Investigator / Analyst / Super-Admin).
+- **Demo role-based access:** Badge IDs map to Investigator, Analyst, and Administrator roles. Investigators can view investigations and manage demo cases; Analysts can recalculate predictions and generate reports; Administrators additionally access system and ingestion controls.
+- **Authentication limitation:** The React prototype stores a demo session in browser `sessionStorage`. Badge mappings and permissions run in client code and are not security controls. Do not use this flow with real records or deploy it as production authentication.
+- **Production requirement:** Enforce identity, role assignment, and every permission on a trusted backend/API using an identity provider (for example OIDC/OAuth2), server-side session/token validation, least-privilege policies, and audit logging. Frontend route guards are only for presentation and usability.
 - **DPDP & BNSS Data Safeguards:** Integrated privacy anonymisation filter masks personally identifiable records (Aadhaar, contact digits) during evidence exports.
 - **Traceable Evidentiary Standards:** Mandatory provenance tracking for all AI predictions ensuring legal defensibility under judicial review.
 
