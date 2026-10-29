@@ -18,6 +18,7 @@ const riskColor = (r) => {
 
 const riskLevel = (r) => (r > 70 ? 'high' : r > 40 ? 'med' : 'low');
 const avatarColor = (type) => ({ person: '#3b82f6', location: '#8b5cf6', vehicle: '#0ea5a1', org: '#d99a2b' }[type] || '#3b82f6');
+const entityTypeLabel = (type) => type === 'org' ? 'Company' : type[0].toUpperCase() + type.slice(1);
 const initials = (name) => name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 const esc = (value) => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const AUTH_SESSION_KEY = 'crimegraph-session';
@@ -394,12 +395,30 @@ function DashboardPage() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [activeTab, setActiveTab] = useState('graph');
   const [searchValue, setSearchValue] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const [riskValue, setRiskValue] = useState(0);
   const [selectedCluster, setSelectedCluster] = useState('all');
   const [selectedGraphCase, setSelectedGraphCase] = useState('all');
   const [entityTypes, setEntityTypes] = useState(['person', 'location', 'vehicle', 'org']);
   const [appliedFilters, setAppliedFilters] = useState({ types: ['person', 'location', 'vehicle', 'org'], risk: 0, cluster: 'all' });
   const graphRef = useRef({});
+  const searchResults = useMemo(() => {
+    const query = searchValue.trim().toLowerCase();
+    if (query.length < 2) return [];
+    return nodes.filter((node) => [node.id, node.alias, node.type, entityTypeLabel(node.type), node.jurisdiction]
+      .some((value) => value && value.toLowerCase().includes(query)))
+      .slice(0, 6);
+  }, [searchValue]);
+
+  const focusEntity = (entity) => {
+    setSelectedGraphCase('all');
+    setSelectedCluster('all');
+    setEntityTypes(['person', 'location', 'vehicle', 'org']);
+    setAppliedFilters({ types: ['person', 'location', 'vehicle', 'org'], risk: 0, cluster: 'all' });
+    setSelectedNode(entity);
+    setSearchValue(entity.id);
+    setSearchOpen(false);
+  };
 
   useEffect(() => {
     if (!getAuthSession()) {
@@ -549,12 +568,7 @@ function DashboardPage() {
     nodeSel.style('display', (node) => visible(node) ? null : 'none');
     linkSel.style('display', (link) => visible(link.source) && visible(link.target) ? null : 'none');
 
-    const query = searchValue.trim().toLowerCase();
-    const searchMatch = query
-      ? nodes.find((node) => (!caseNodeIds || caseNodeIds.has(node.id))
-        && (node.id.toLowerCase().includes(query) || (node.alias && node.alias.toLowerCase().includes(query))))
-      : null;
-    const focusNode = searchMatch || selectedNode;
+    const focusNode = selectedNode;
 
     if (focusNode) {
       const neighborhood = new Set([focusNode.id]);
@@ -573,11 +587,38 @@ function DashboardPage() {
     const visibleNodes = nodes.filter(visible);
     const summary = document.querySelector('#graph-wrap .graph-stats .stat-pill b');
     if (summary) summary.textContent = String(visibleNodes.length);
-    if (searchMatch && searchMatch.id !== selectedNode?.id) setSelectedNode(searchMatch);
-    if (!query && selectedNode && !visible(selectedNode)) setSelectedNode(null);
-  }, [activeTab, appliedFilters, selectedGraphCase, selectedNode, searchValue]);
+    if (selectedNode && !visible(selectedNode)) setSelectedNode(null);
+  }, [activeTab, appliedFilters, selectedGraphCase, selectedNode]);
 
   const selectedEntity = useMemo(() => selectedNode ?? null, [selectedNode]);
+  const selectedConnections = selectedEntity
+    ? links.flatMap((link) => {
+      const connectedId = link.source === selectedEntity.id
+        ? link.target
+        : link.target === selectedEntity.id ? link.source : null;
+      const connectedEntity = connectedId && nodes.find((node) => node.id === connectedId);
+      return connectedEntity ? [{ entity: connectedEntity, weak: link.weak }] : [];
+    })
+    : [];
+
+  const submitEntitySearch = (event) => {
+    event.preventDefault();
+    if (searchResults.length === 0) {
+      showToast('No matching person, company, vehicle, or location found', 'error');
+      return;
+    }
+    const query = searchValue.trim().toLowerCase();
+    const exactMatch = nodes.find((node) => node.id.toLowerCase() === query || node.alias.toLowerCase() === query);
+    if (exactMatch) {
+      focusEntity(exactMatch);
+      return;
+    }
+    if (searchResults.length === 1) {
+      focusEntity(searchResults[0]);
+      return;
+    }
+    showToast('Choose an entity from the search results', 'info');
+  };
 
   const graphCase = cases.find((item) => item.id === selectedGraphCase);
   const visibleGraphNodes = nodes.filter((node) => (!graphCase || graphCase.suspects.includes(node.id))
@@ -619,10 +660,46 @@ function DashboardPage() {
       <main className="main">
         <div className="topbar">
           <span className="topbar-title">Live Investigator Console</span>
-          <div className="topbar-search">
+          <form className="topbar-search entity-search" onSubmit={submitEntitySearch}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-            <input value={searchValue} onChange={(e) => setSearchValue(e.target.value)} type="text" placeholder="Search entity, case or FIR no..." />
-          </div>
+            <input
+              value={searchValue}
+              onChange={(e) => {
+                setSearchValue(e.target.value);
+                setSearchOpen(true);
+              }}
+              onFocus={() => setSearchOpen(true)}
+              onKeyDown={(e) => e.key === 'Escape' && setSearchOpen(false)}
+              type="search"
+              placeholder="Search person, company, vehicle, location..."
+              aria-label="Search people, companies, vehicles, and locations"
+              aria-autocomplete="list"
+              aria-controls="entity-search-results"
+            />
+            <button type="submit" className="entity-search-submit" aria-label="Search network">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            </button>
+            {searchOpen && searchValue.trim().length >= 2 && (
+              <div className="entity-search-results" id="entity-search-results" role="listbox" aria-label="Matching entities">
+                {searchResults.length ? searchResults.map((entity) => (
+                  <button
+                    type="button"
+                    className="entity-search-result"
+                    key={entity.id}
+                    role="option"
+                    aria-selected={selectedEntity?.id === entity.id}
+                    onClick={() => focusEntity(entity)}
+                  >
+                    <span className="entity-search-result-main">
+                      <strong>{entity.id}</strong>
+                      <span>{entity.alias !== '—' ? `Alias: ${entity.alias}` : entity.jurisdiction}</span>
+                    </span>
+                    <span className="entity-search-result-type">{entityTypeLabel(entity.type)}</span>
+                  </button>
+                )) : <div className="entity-search-empty">No matching entities</div>}
+              </div>
+            )}
+          </form>
           <div className="topbar-right">
             <div className="badge badge-live" style={{ padding: '5px 10px' }}><span className="dot dot-live" /> Live</div>
             <div className="badge badge-muted">Sample Dataset · 24 Entities</div>
@@ -737,7 +814,7 @@ function DashboardPage() {
                         <div className="avatar" style={{ background: avatarColor(selectedEntity.type) }}>{initials(selectedEntity.id)}</div>
                         <div>
                           <div className="entity-name">{selectedEntity.id}</div>
-                          <div className="entity-alias">{selectedEntity.alias !== '—' ? `Alias: "${selectedEntity.alias}"` : selectedEntity.type[0].toUpperCase() + selectedEntity.type.slice(1)}</div>
+                          <div className="entity-alias">{selectedEntity.alias !== '—' ? `Alias: "${selectedEntity.alias}"` : entityTypeLabel(selectedEntity.type)}</div>
                         </div>
                       </div>
                       <div className="risk-block">
@@ -750,8 +827,25 @@ function DashboardPage() {
                       </div>
                       <div className="kv"><span>Last Activity</span><span>{selectedEntity.lastActivity}</span></div>
                       <div className="kv"><span>Jurisdiction</span><span>{selectedEntity.jurisdiction}</span></div>
-                      <div className="kv"><span>Entity Type</span><span>{selectedEntity.type[0].toUpperCase() + selectedEntity.type.slice(1)}</span></div>
+                      <div className="kv"><span>Entity Type</span><span>{entityTypeLabel(selectedEntity.type)}</span></div>
                       <div className="kv" style={{ borderBottom: 'none' }}><span>Cluster</span><span>{['Maharashtra', 'Delhi NCR', 'Karnataka'][selectedEntity.cluster]}</span></div>
+                      <div className="assoc-list">
+                        <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Direct Connections ({selectedConnections.length})</label>
+                        {selectedConnections.length ? selectedConnections.map(({ entity, weak }) => (
+                          <button
+                            type="button"
+                            className="assoc-item"
+                            key={entity.id}
+                            onClick={() => focusEntity(entity)}
+                            title={`Show links connected to ${entity.id}`}
+                          >
+                            <span className="assoc-dot" style={{ background: riskColor(entity.risk) }} />
+                            <span className="assoc-entity-name">{entity.id}</span>
+                            <span className="badge badge-muted assoc-entity-type">{entityTypeLabel(entity.type)}</span>
+                            {weak && <span className="assoc-weak-label">Weak</span>}
+                          </button>
+                        )) : <div className="entity-search-empty">No direct connections in the sample graph</div>}
+                      </div>
                     </div>
                   ) : (
                     <div className="empty-state">
